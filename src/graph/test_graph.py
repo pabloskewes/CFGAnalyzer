@@ -118,6 +118,38 @@ class GraphTestCase(unittest.TestCase):
         # Test nodes and edges
         self.assertEqual(graph.nodes, expected_nodes)
         self.assertEqual(graph.edges, expected_edges)
+        
+    def test_num_nodes(self):
+        # Create a graph
+        graph = Graph()
+
+        # Add nodes
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_node(3)
+        graph.add_node(4)
+
+        # Test number of nodes
+        self.assertEqual(graph.num_nodes, 4)
+    
+    def test_num_edges(self):
+        # Create a graph
+        graph = Graph()
+
+        # Add nodes
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_node(3)
+        graph.add_node(4)
+
+        # Add edges
+        graph.add_edge(1, 2)
+        graph.add_edge(2, 3)
+        graph.add_edge(3, 4)
+        graph.add_edge(4, 1)
+
+        # Test number of edges
+        self.assertEqual(graph.num_edges, 4)
 
 
 if __name__ == '__main__':
