@@ -13,6 +13,14 @@ class Graph:
 
     def add_edge(self, source: Any, target: Any):
         self.edges.append((source, target))
+        
+    @property
+    def num_nodes(self) -> int:
+        return len(self.nodes)
+    
+    @property
+    def num_edges(self) -> int:
+        return len(self.edges)
 
     @property
     def adjacency_list(self) -> Dict[Any, List[Any]]:
