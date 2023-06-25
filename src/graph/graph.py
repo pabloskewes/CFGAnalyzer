@@ -2,6 +2,7 @@ from typing import Any, List, Dict
 
 
 class Graph:
+    
     def __init__(self):
         self.nodes: List[Any] = []
         self.edges: List[tuple[Any, Any]] = []
