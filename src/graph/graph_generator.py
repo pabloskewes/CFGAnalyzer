@@ -43,7 +43,7 @@ def is_else(line):
     
 here = os.path.dirname(os.path.abspath(__file__))
 
-filename = os.path.join(here, 'code_example1.txt')
+filename = os.path.join(here, 'code_example3.txt')
 f = open(filename, 'r')
 
 graph = Graph()
@@ -60,38 +60,40 @@ tabs = 0
 
 for line in f:
     # Veo si la linea es un if
-    if is_if(line):
+    if is_if(line) and tab_counter(line)==tabs:
         if_block = True
         else_block = False
-        line_if = (line_to_add+line+'\n') # Agrego la linea al nodo por agregar
+        line_if = (line_to_add+line) # Agrego la linea al nodo por agregar
         graph.add_node(line_if) # Agrego el nodo
+        line_to_add = ''
         tabs += 1 # Aumento el numero de tabs necesario para estar en el bloque
     # Si hay un bloque if activo las lineas deben tener la cantidad de tabs adecuadas
-    if if_block and tab_counter(line)==tabs:
-        line_to_add += (line+'\n') # Agrego cada linea dentro del bloque al bloque por agregar
+    elif if_block and tab_counter(line)==tabs:
+        line_to_add = (line_to_add+line) # Agrego cada linea dentro del bloque al bloque por agregar
     # Veo si la linea es un else y tiene un tab menos q los necesarios para estar dentro del bloque
-    if is_else(line) and tab_counter(line)==tabs-1:
+    elif is_else(line) and tab_counter(line)==tabs-1:
         if_block = False 
         else_block = True
         graph.add_node(line_to_add) # Agrego las lineas consideradas dentro del bloque if
         # Arco desde line_to_add a line_if
         line_to_add = '' # Reseteo las lineas a agregar
     # Si hay un bloque else activo las lineas deben tener la cantidad de tabs adecuados
-    if else_block and tab_counter(line)==tabs:
-        line_to_add += (line+'\n')
+    elif else_block and tab_counter(line)==tabs:
+        line_to_add += (line)
     # Si ya no tienen los tabs adecuados reseteo los bloques y las lineas a agregar
-    if else_block and tab_counter(line)==tabs-1:
+    elif else_block and tab_counter(line)==tabs-1:
         graph.add_node(line_to_add)
         # Arco desde line_to_add a line_if
         line_to_add = ''
         else_block = False
         tabs -= 1
-        line_to_add += (line+'\n')
+        line_to_add += (line)
     # Si no hay ningun bloque if o else simplemente agrego la linea
     else:
-        line_to_add += (line+'\n')
+        line_to_add += (line)
 # Finalmente agrego todas las lineas restantes
 graph.add_node(line_to_add)
+graph.add_node('fin')
 
-
+print(graph.nodes)
 f.close()

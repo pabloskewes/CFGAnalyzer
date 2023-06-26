@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Tuple
 
 
 class Graph:
@@ -53,7 +53,7 @@ class Graph:
             self._adjacency_matrix[source_index][target_index] = 1
 
     @classmethod
-    def from_nodes_and_edges(cls, nodes: List[Any], edges: List[tuple[Any, Any]]) -> 'Graph':
+    def from_nodes_and_edges(cls, nodes: List[Any], edges: List[Tuple[Any, Any]]) -> 'Graph':
         graph = cls()
         for node in nodes:
             graph.add_node(node)
