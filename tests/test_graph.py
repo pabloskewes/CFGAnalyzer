@@ -20,12 +20,7 @@ class GraphTestCase(unittest.TestCase):
         graph.add_edge(4, 1)
 
         # Expected adjacency list
-        expected_adj_list = {
-            1: [2],
-            2: [3],
-            3: [4],
-            4: [1]
-        }
+        expected_adj_list = {1: [2], 2: [3], 3: [4], 4: [1]}
 
         # Test adjacency list
         adj_list = graph.adjacency_list
@@ -48,12 +43,7 @@ class GraphTestCase(unittest.TestCase):
         graph.add_edge(4, 1)
 
         # Expected adjacency matrix
-        expected_adj_matrix = [
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
-            [1, 0, 0, 0]
-        ]
+        expected_adj_matrix = [[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0]]
 
         # Test adjacency matrix
         adj_matrix = graph.adjacency_matrix
@@ -68,12 +58,7 @@ class GraphTestCase(unittest.TestCase):
         graph = Graph.from_nodes_and_edges(nodes, edges)
 
         # Expected adjacency list
-        expected_adj_list = {
-            1: [2],
-            2: [3],
-            3: [4],
-            4: [1]
-        }
+        expected_adj_list = {1: [2], 2: [3], 3: [4], 4: [1]}
 
         # Test adjacency list
         adj_list = graph.adjacency_list
@@ -81,12 +66,7 @@ class GraphTestCase(unittest.TestCase):
 
     def test_from_adjacency_list(self):
         # Create an adjacency list
-        adj_list = {
-            1: [2],
-            2: [3],
-            3: [4],
-            4: [1]
-        }
+        adj_list = {1: [2], 2: [3], 3: [4], 4: [1]}
 
         # Create a graph from adjacency list
         graph = Graph.from_adjacency_list(adj_list)
@@ -101,12 +81,7 @@ class GraphTestCase(unittest.TestCase):
 
     def test_from_adjacency_matrix(self):
         # Create an adjacency matrix
-        adj_matrix = [
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
-            [1, 0, 0, 0]
-        ]
+        adj_matrix = [[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0]]
 
         # Create a graph from adjacency matrix
         graph = Graph.from_adjacency_matrix(adj_matrix)
@@ -118,7 +93,7 @@ class GraphTestCase(unittest.TestCase):
         # Test nodes and edges
         self.assertEqual(graph.nodes, expected_nodes)
         self.assertEqual(graph.edges, expected_edges)
-        
+
     def test_num_nodes(self):
         # Create a graph
         graph = Graph()
@@ -131,7 +106,7 @@ class GraphTestCase(unittest.TestCase):
 
         # Test number of nodes
         self.assertEqual(graph.num_nodes, 4)
-    
+
     def test_num_edges(self):
         # Create a graph
         graph = Graph()
@@ -152,5 +127,5 @@ class GraphTestCase(unittest.TestCase):
         self.assertEqual(graph.num_edges, 4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 
 class GraphError(Exception):
     """An exception raised when an invalid operation is performed on a graph."""
+
     pass
 
 
 class Graph:
     """A graph data structure. Can be initialized from nodes and edges, an adjacency list, or an adjacency matrix."""
+
     def __init__(self):
         self.nodes: List[Any] = []
         self.edges: List[Tuple[Any, Any]] = []
@@ -20,21 +22,21 @@ class Graph:
     def add_node(self, node: Any):
         """Add a node to the graph."""
         if node in self.nodes:
-            raise GraphError(f'Node {node} already exists in the graph.')
+            raise GraphError(f"Node {node} already exists in the graph.")
         self.nodes.append(node)
 
     def add_edge(self, source: Any, target: Any):
         """Add an edge to the graph."""
         if source not in self.nodes:
-            raise GraphError(f'Node {source} does not exist in the graph.')
+            raise GraphError(f"Node {source} does not exist in the graph.")
         if target not in self.nodes:
-            raise GraphError(f'Node {target} does not exist in the graph.')
+            raise GraphError(f"Node {target} does not exist in the graph.")
         self.edges.append((source, target))
-        
+
     @property
     def num_nodes(self) -> int:
         return len(self.nodes)
-    
+
     @property
     def num_edges(self) -> int:
         return len(self.edges)
@@ -69,7 +71,9 @@ class Graph:
             self._adjacency_matrix[source_index][target_index] = 1
 
     @classmethod
-    def from_nodes_and_edges(cls, nodes: List[Any], edges: List[Tuple[Any, Any]]) -> 'Graph':
+    def from_nodes_and_edges(
+        cls, nodes: List[Any], edges: List[Tuple[Any, Any]]
+    ) -> "Graph":
         """
         Initialize a graph from nodes and edges.
         Args:
@@ -87,7 +91,7 @@ class Graph:
         return graph
 
     @classmethod
-    def from_adjacency_list(cls, adjacency_list: Dict[Any, List[Any]]) -> 'Graph':
+    def from_adjacency_list(cls, adjacency_list: Dict[Any, List[Any]]) -> "Graph":
         """
         Initialize a graph from an adjacency list.
         Args:
@@ -98,15 +102,15 @@ class Graph:
         graph = cls()
         for node, neighbors in adjacency_list.items():
             if node not in graph.nodes:
-                graph.add_node(node) 
+                graph.add_node(node)
             for neighbor in neighbors:
                 if neighbor not in graph.nodes:
-                    graph.add_node(neighbor)  
-                graph.add_edge(node, neighbor)  
+                    graph.add_node(neighbor)
+                graph.add_edge(node, neighbor)
         return graph
 
     @classmethod
-    def from_adjacency_matrix(cls, adjacency_matrix: List[List[int]]) -> 'Graph':
+    def from_adjacency_matrix(cls, adjacency_matrix: List[List[int]]) -> "Graph":
         """
         Initialize a graph from an adjacency matrix.
         Args:
@@ -118,13 +122,13 @@ class Graph:
         for row_index, row in enumerate(adjacency_matrix):
             node = row_index
             if node not in graph.nodes:
-                graph.add_node(node) 
+                graph.add_node(node)
             for col_index, has_edge in enumerate(row):
                 if has_edge:
                     neighbor = col_index
                     if neighbor not in graph.nodes:
-                        graph.add_node(neighbor) 
-                    graph.add_edge(node, neighbor)  
+                        graph.add_node(neighbor)
+                    graph.add_edge(node, neighbor)
         return graph
 
     def plot(self):
@@ -138,11 +142,13 @@ class Graph:
         node_size = 2000
         node_color = "lightblue"
 
-        nx.draw_networkx_nodes(nx_graph, pos, node_size=node_size, node_color=node_color, node_shape="s")
+        nx.draw_networkx_nodes(
+            nx_graph, pos, node_size=node_size, node_color=node_color, node_shape="s"
+        )
         nx.draw_networkx_labels(nx_graph, pos, font_size=10, verticalalignment="center")
 
         nx.draw_networkx_edges(nx_graph, pos)
-        
+
         plt.xlim(-1.1, 1.1)
         plt.ylim(-1.1, 1.1)
         plt.axis("off")
@@ -153,4 +159,4 @@ class Graph:
 def ciclomatic_complexity(graph: Graph) -> int:
     """Calculate the ciclomatic complexity of a graph."""
     P = 1
-    return graph.num_edges - graph.num_nodes + 2*P
+    return graph.num_edges - graph.num_nodes + 2 * P
