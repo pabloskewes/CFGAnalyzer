@@ -2,14 +2,15 @@ from typing import List
 from enum import Enum
 from pprint import pprint
 
-from parser.line_parser import (
-    is_var,
-    is_constant,
+from line_parser import (
     is_function_call,
     is_condition,
-    is_expression,
     is_assignment,
 )
+
+class InvalidLineError(ValueError):
+    """Raised when a line is invalid."""
+    pass
     
 
 class LineType(Enum):
@@ -19,19 +20,77 @@ class LineType(Enum):
     WHILE = 'WHILE'
     FUNCTION = 'FUNCTION'
     
+    def __repr__(self):
+        return f'LineType.{self.value}'
+    
+
+def clean_string(string: str) -> str:
+    string = (
+        string.replace('    ', '\t')
+        .replace('’', '\'')
+    )
+    return string
+    
+    
+def get_line_type(line: str) -> LineType:
+    """
+    Get the type of a line, raise InvalidLineError if the line is invalid.
+    The possible types are:
+        - LineType.ASSIGN: assignment
+        - LineType.IF: if statement
+        - LineType.ELSE: else statement
+        - LineType.WHILE: while statement
+        - LineType.FUNCTION: function call
+    Args:
+        line: line to get the type of
+    Returns:
+        LineType of the line
+    """
+    if is_assignment(line):
+        return LineType.ASSING
+    
+    elif line.startswith('if '):
+        condition = line[3:].strip()
+        if not condition.endswith(':'):
+            raise InvalidLineError(f'Invalid if condition: "{line}", missing ":"')
+        if not is_condition(condition[:-1]):
+            raise InvalidLineError(f'Invalid if condition: {line[3:]}')
+        return LineType.IF
+    
+    elif line.startswith('else'):
+        after_else = line[4:].strip()
+        if after_else != ':':
+            raise InvalidLineError(f'Invalid else statement: "{line}", missing ":"')
+        return LineType.ELSE
+    
+    elif line.startswith('while '):
+        condition = line[6:].strip()
+        if not condition.endswith(':'):
+            raise InvalidLineError(f'Invalid while condition: "{line}", missing ":"')
+        if not is_condition(condition[:-1]):
+            raise InvalidLineError(f'Invalid while condition: {line[6:]}')
+        return LineType.WHILE
+    
+    elif is_function_call(line):
+        return LineType.FUNCTION
+    
+    else:
+        raise InvalidLineError(f'Invalid line: {line}')
+
 
 class Line:
     def __init__(self, content: str, line_number: int):
+        content = clean_string(content)
+        
         self.content = content.strip()
         self.line_number = line_number
-        
-        content = content.replace('    ', '\t')
         self.tabs = len(content) - len(content.lstrip('\t'))
+        self.type: LineType = get_line_type(self.content)
     
     def __repr__(self):
-        return f'Line({self.content=}, {self.tabs=})'
+        return f'Line({self.content=}, {self.tabs=}, {self.type=})'
     
-
+    
 def parse_lines(path_to_program: str) -> List[Line]:
     """
     Parse a program and return a list of its lines having their indentation level
@@ -48,23 +107,6 @@ def parse_lines(path_to_program: str) -> List[Line]:
     return parsed_lines
 
 
-# class ProgramParser:
-#     def __init__(self) -> None:
-#         self.lines: List[Line] = []
-        
-#     def parse(self, path: str) -> None:
-#         self._parse_lines(path=path)
-        
-#     def _parse_lines(self, path: str) -> None:
-#         """Parse a program."""
-#         with open(path, 'r') as f:
-#             lines = f.readlines()
-#         for line_number, line in enumerate(lines):
-#             self.lines.append(Line(line, line_number))
-        
-    
-    
-    
 if __name__ == '__main__':
     from pathlib import Path
     ROOT = Path(__file__).parent.parent.parent

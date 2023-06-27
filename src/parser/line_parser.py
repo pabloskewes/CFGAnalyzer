@@ -3,7 +3,7 @@ def is_var(var: str) -> bool:
 
 
 def is_constant(constant: str) -> bool:
-    return constant.isnumeric()
+    return constant.isnumeric() or constant == 'True' or constant == 'False'
 
 
 def is_string(string: str) -> bool:
