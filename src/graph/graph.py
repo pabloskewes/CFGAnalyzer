@@ -126,13 +126,27 @@ class Graph:
                         graph.add_node(neighbor) 
                     graph.add_edge(node, neighbor)  
         return graph
-    
+
     def plot(self):
         """Plot the graph using networkx and matplotlib."""
         nx_graph = nx.DiGraph()
         nx_graph.add_nodes_from(self.nodes)
         nx_graph.add_edges_from(self.edges)
-        nx.draw(nx_graph, with_labels=True)
+
+        pos = nx.spring_layout(nx_graph)
+
+        node_size = 2000
+        node_color = "lightblue"
+
+        nx.draw_networkx_nodes(nx_graph, pos, node_size=node_size, node_color=node_color, node_shape="s")
+        nx.draw_networkx_labels(nx_graph, pos, font_size=10, verticalalignment="center")
+
+        nx.draw_networkx_edges(nx_graph, pos)
+        
+        plt.xlim(-1.1, 1.1)
+        plt.ylim(-1.1, 1.1)
+        plt.axis("off")
+
         plt.show()
 
 
