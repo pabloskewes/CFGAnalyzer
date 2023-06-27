@@ -52,15 +52,23 @@ def generate_graph(path: str) -> Graph:
     f = open(path, "r")
 
     graph = Graph()
+    graph.add_node("fin")
 
     line_to_add = ""
     line_if = ""
-    line_else = ""
-    line_while = ""
-    main_line = ""
+    end_of_if = ""
+    end_of_else = ''
+    end_of_while = ''
     if_block = False
     else_block = False
     while_block = False
+    edge_from_if = True
+    edge_to_if = True
+    edge_to_else = True
+    edge_from_while = True
+    edge_to_while = True
+    edge_end_while = True
+
     tabs = 0
 
     for line in f:
@@ -69,9 +77,12 @@ def generate_graph(path: str) -> Graph:
             if_block = True
             else_block = False
             line_if = line_to_add + line  # Agrego la linea al nodo por agregar
+            edge_to_if = False
             graph.add_node(line_if)  # Agrego el nodo
             line_to_add = ""
             tabs += 1  # Aumento el numero de tabs necesario para estar en el bloque
+            if while_block:
+                graph.add_edge(line_while, line_if)
         # Si hay un bloque if activo las lineas deben tener la cantidad de tabs adecuadas
         elif if_block and tab_counter(line) == tabs:
             line_to_add = (
@@ -81,28 +92,99 @@ def generate_graph(path: str) -> Graph:
         elif is_else(line) and tab_counter(line) == tabs - 1:
             if_block = False
             else_block = True
+            edge_to_else = False
             graph.add_node(
                 line_to_add
             )  # Agrego las lineas consideradas dentro del bloque if
             # Arco desde line_to_add a line_if
-            line_to_add = ""  # Reseteo las lineas a agregar
+            graph.add_edge(line_if, line_to_add)
+            edge_to_if = True
+            end_of_if = line_to_add
+            edge_from_if = False
+            line_to_add = ''  # Reseteo las lineas a agregar
+        # Si se acabo el bloque if y no hay else
+        elif if_block and tab_counter(line) == tabs-1:
+            if_block = False
+            graph.add_node(
+                line_to_add
+            )  # Agrego las lineas consideradas dentro del bloque if
+            # Arco desde line_to_add a line_if
+            graph.add_edge(line_if, line_to_add)
+            end_of_if = line_to_add
+            edge_from_if = False
+            line_to_add = line  # Reseteo las lineas a agregar
+            tabs = tabs - 1
+            line_if = ''
         # Si hay un bloque else activo las lineas deben tener la cantidad de tabs adecuados
         elif else_block and tab_counter(line) == tabs:
             line_to_add += line
         # Si ya no tienen los tabs adecuados reseteo los bloques y las lineas a agregar
         elif else_block and tab_counter(line) == tabs - 1:
+            end_of_else = line_to_add
             graph.add_node(line_to_add)
             # Arco desde line_to_add a line_if
+            graph.add_edge(line_if, line_to_add)
+            edge_to_else = True
             line_to_add = ""
             else_block = False
-            tabs -= 1
+            tabs = tabs- 1
             line_to_add += line
+        # Si la linea es un while
+        elif is_while(line) and tab_counter(line)==tabs:
+            if_block = False
+            else_block = False
+            while_block = True
+            graph.add_node(line_to_add)
+            line_while = line
+            graph.add_node(line_while)
+            graph.add_edge(line_to_add, line_while)
+            edge_from_while = False
+            edge_to_while = False
+            edge_end_while = False
+            line_to_add = ''
+            tabs += 1
+        elif while_block and tab_counter(line) == tabs-1:
+            while_block = False
+            graph.add_node(line_to_add)
+            graph.add_edge(line_while, line_to_add)
+            edge_from_while = True
+            graph.add_edge(line_to_add, line_while)
+            edge_to_while = True
+            line_to_add = line
         # Si no hay ningun bloque if o else simplemente agrego la linea
         else:
             line_to_add += line
+
     # Finalmente agrego todas las lineas restantes
-    graph.add_node(line_to_add)
-    graph.add_node("fin")
+    if line_to_add != '':
+        graph.add_node(line_to_add)
+        if else_block:
+            end_of_else = line_to_add
+        elif while_block:
+            end_of_while = line_to_add
+        line_to_add == ''
+        
+    # Confirmamos los arcos de los bloques if/else
+    if not edge_from_if:
+        if line_to_add == '' or line_to_add == end_of_else: 
+            graph.add_edge(end_of_if, 'fin')
+        else:
+            graph.add_edge(end_of_if, line_to_add)
+        edge_from_if = True
+    if not edge_to_if:
+        graph.add_edge(line_if, line_to_add)
+        edge_to_if = True
+    if not edge_to_else:
+        graph.add_edge(line_if, line_to_add)
+        edge_to_else = True
+    if not edge_end_while:
+        if line_to_add == '' or line_to_add == end_of_while:
+            graph.add_edge(line_while, 'fin')
+        else:
+            graph.add_edge(line_while, line_to_add)
+
+    if tab_counter(line) == tabs-1:
+        graph.add_edge(line_to_add, 'fin')
 
     f.close()
     return graph
@@ -112,3 +194,4 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     filepath = os.path.join(here, "code_example3.txt")
     graph = generate_graph(filepath)
+    print(graph.edges)
