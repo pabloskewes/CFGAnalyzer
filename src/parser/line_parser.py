@@ -1,4 +1,3 @@
-
 def is_var(var: str) -> bool:
     return var.isalpha() and var.islower() and len(var) == 1
 
