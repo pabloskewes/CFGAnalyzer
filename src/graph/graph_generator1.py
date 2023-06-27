@@ -65,6 +65,7 @@ def generate_graph(path: str) -> Graph:
     edge_from_if = True
     edge_to_if = True
     edge_to_else = True
+    edge_from_else = True
     edge_from_while = True
     edge_to_while = True
     edge_end_while = True
@@ -83,6 +84,7 @@ def generate_graph(path: str) -> Graph:
             tabs += 1  # Aumento el numero de tabs necesario para estar en el bloque
             if while_block:
                 graph.add_edge(line_while, line_if)
+                edge_from_while = True
         # Si hay un bloque if activo las lineas deben tener la cantidad de tabs adecuadas
         elif if_block and tab_counter(line) == tabs:
             line_to_add = (
@@ -93,6 +95,7 @@ def generate_graph(path: str) -> Graph:
             if_block = False
             else_block = True
             edge_to_else = False
+            edge_from_else = False
             graph.add_node(
                 line_to_add
             )  # Agrego las lineas consideradas dentro del bloque if
@@ -151,6 +154,7 @@ def generate_graph(path: str) -> Graph:
             graph.add_edge(line_to_add, line_while)
             edge_to_while = True
             line_to_add = line
+            tabs = tabs - 1
         # Si no hay ningun bloque if o else simplemente agrego la linea
         else:
             line_to_add += line
@@ -171,6 +175,12 @@ def generate_graph(path: str) -> Graph:
         else:
             graph.add_edge(end_of_if, line_to_add)
         edge_from_if = True
+    if not edge_from_else:
+        if line_to_add == '' or line_to_add == end_of_else: 
+            pass
+        else:
+            graph.add_edge(end_of_else, line_to_add)
+        edge_from_else = True
     if not edge_to_if:
         graph.add_edge(line_if, line_to_add)
         edge_to_if = True
@@ -182,8 +192,10 @@ def generate_graph(path: str) -> Graph:
             graph.add_edge(line_while, 'fin')
         else:
             graph.add_edge(line_while, line_to_add)
+    if not edge_to_while:
+        graph.add_edge(end_of_while, line_while)
 
-    if tab_counter(line) == tabs-1:
+    if tab_counter(line_to_add) == 0:
         graph.add_edge(line_to_add, 'fin')
 
     f.close()
