@@ -108,16 +108,17 @@ def generate_graph(path: str) -> Graph:
         # Si se acabo el bloque if y no hay else
         elif if_block and tab_counter(line) == tabs-1:
             if_block = False
+            edge_to_else = False
             graph.add_node(
                 line_to_add
             )  # Agrego las lineas consideradas dentro del bloque if
             # Arco desde line_to_add a line_if
             graph.add_edge(line_if, line_to_add)
+            edge_to_if = True
             end_of_if = line_to_add
             edge_from_if = False
             line_to_add = line  # Reseteo las lineas a agregar
             tabs = tabs - 1
-            line_if = ''
         # Si hay un bloque else activo las lineas deben tener la cantidad de tabs adecuados
         elif else_block and tab_counter(line) == tabs:
             line_to_add += line
