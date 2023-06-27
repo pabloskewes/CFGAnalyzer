@@ -1,5 +1,5 @@
 import unittest
-from graph import Graph
+from src.graph import Graph
 
 
 class GraphTestCase(unittest.TestCase):
