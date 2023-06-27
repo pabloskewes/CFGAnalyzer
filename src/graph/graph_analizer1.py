@@ -1,19 +1,17 @@
 from src.graph.graph import Graph
 from string import ascii_lowercase
 
-def check_adj_list(letter, node, path, visited_nodes, graph: Graph):
-    for n in graph.nodes:
-        if n not in visited_nodes:
-            if node in graph.adjacency_list[n]:
-                if letter in n[:n.find('=')]:
-                    visited_nodes.append(n)
-                    pass
-                else:
-                    visited_nodes.append(n)
-                    path.append(n)
-                    path = check_adj_list(letter, n, path, visited_nodes, graph)
-            if graph.adjacency_list[n]==[]:
-                return path
+def path_generator(start, end, path, graph: Graph):
+    if start == end:
+        return path
+    else:
+        if graph.adjacency_list[start] == []:
+            return 'No path'
+        else:
+            for node in graph.adjacency_list[start]:
+                path.append[node]
+                path_generator(node, end, path, graph)
+
 
 
 def analize_graph(graph: Graph):
@@ -40,14 +38,11 @@ def analize_graph(graph: Graph):
     undef_var = []
     paths = []
 
-    for i in range(len(used_var)):
-        start = used_in_node[i]
-        path = check_adj_list(used_var[i], start, [start], [start], graph)
-        if path != start:
-            undef_var.append(used_var[i])
-            paths.append(path)
+    # Para encontrar un camino que no define una variable, debemos encontrar todos los caminos desde el comienzo hasta 'fin'
+    # Luego vemos si para todos los caminos existe al menos un nodo donde se define la variable
+    paths = path_generator(graph.node[1], graph.node[0], [graph.node[1]])
 
-    return undef_var
+    return paths
 
 
 
