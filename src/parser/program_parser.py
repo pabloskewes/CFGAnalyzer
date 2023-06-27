@@ -2,7 +2,7 @@ from typing import List
 from enum import Enum
 from pprint import pprint
 
-from line_parser import (
+from src.parser.line_parser import (
     is_function_call,
     is_condition,
     is_assignment,
@@ -79,6 +79,15 @@ def get_line_type(line: str) -> LineType:
 
 
 class Line:
+    """ 
+    Structure representing a line of code.
+    Attributes:
+        content: content of the line (without indentation)
+        line_number: line number in the program
+        tabs: number of tabs at the beginning of the line (indentation level)
+        type: type of the line, see LineType
+    """
+
     def __init__(self, content: str, line_number: int):
         content = clean_string(content)
         
@@ -116,6 +125,4 @@ if __name__ == '__main__':
     lines = parse_lines(program_path)
     
     pprint(lines)
-    
-        
     
