@@ -1,0 +1,17 @@
+x = 0
+if x > 5:
+    y = 3
+    if y < 10:
+        z = 5
+    else:
+        z = 6
+else:
+    y = 4
+    if y < 10:
+        z = 7
+    else:
+        z = 8
+if z == 5:
+    print("z is 5")
+else:
+    print("z is not 5")
