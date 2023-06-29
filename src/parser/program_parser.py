@@ -1,127 +1,95 @@
-from typing import List
-from enum import Enum
-from pprint import pprint
-
-from src.parser.line_parser import (
-    is_function_call,
-    is_condition,
-    is_assignment,
-)
+from src.graph import Graph
+from src.parser.line_parser import parse_lines
+from src.parser.block_parser import ProgramBlock, BlockType, subdivide_if, subdivide_while
 
 
-class InvalidLineError(ValueError):
-    """Raised when a line is invalid."""
-
-    pass
-
-
-class LineType(Enum):
-    ASSING = "ASSIGN"
-    IF = "IF"
-    ELSE = "ELSE"
-    WHILE = "WHILE"
-    FUNCTION = "FUNCTION"
-
-    def __repr__(self):
-        return f"LineType.{self.value}"
-
-
-def clean_string(string: str) -> str:
-    string = string.replace("    ", "\t").replace("’", "'")
-    return string
-
-
-def get_line_type(line: str) -> LineType:
-    """
-    Get the type of a line, raise InvalidLineError if the line is invalid.
-    The possible types are:
-        - LineType.ASSIGN: assignment
-        - LineType.IF: if statement
-        - LineType.ELSE: else statement
-        - LineType.WHILE: while statement
-        - LineType.FUNCTION: function call
-    Args:
-        line: line to get the type of
-    Returns:
-        LineType of the line
-    """
-    if is_assignment(line):
-        return LineType.ASSING
-
-    elif line.startswith("if "):
-        condition = line[3:].strip()
-        if not condition.endswith(":"):
-            raise InvalidLineError(f'Invalid if condition: "{line}", missing ":"')
-        if not is_condition(condition[:-1]):
-            raise InvalidLineError(f"Invalid if condition: {line[3:]}")
-        return LineType.IF
-
-    elif line.startswith("else"):
-        after_else = line[4:].strip()
-        if after_else != ":":
-            raise InvalidLineError(f'Invalid else statement: "{line}", missing ":"')
-        return LineType.ELSE
-
-    elif line.startswith("while "):
-        condition = line[6:].strip()
-        if not condition.endswith(":"):
-            raise InvalidLineError(f'Invalid while condition: "{line}", missing ":"')
-        if not is_condition(condition[:-1]):
-            raise InvalidLineError(f"Invalid while condition: {line[6:]}")
-        return LineType.WHILE
-
-    elif is_function_call(line):
-        return LineType.FUNCTION
-
-    else:
-        raise InvalidLineError(f"Invalid line: {line}")
-
-
-class Line:
-    """
-    Structure representing a line of code.
-    Attributes:
-        content: content of the line (without indentation)
-        line_number: line number in the program
-        tabs: number of tabs at the beginning of the line (indentation level)
-        type: type of the line, see LineType
-    """
-
-    def __init__(self, content: str, line_number: int):
-        content = clean_string(content)
-
-        self.content = content.strip()
-        self.line_number = line_number
-        self.tabs = len(content) - len(content.lstrip("\t"))
-        self.type: LineType = get_line_type(self.content)
-
-    def __repr__(self):
-        return f"Line({self.content=}, {self.tabs=}, {self.type=})"
-
-
-def parse_lines(path_to_program: str) -> List[Line]:
-    """
-    Parse a program and return a list of its lines having their indentation level
-    Args:
-        path_to_program: path to the program to parse
-    Returns:
-        list of Line objects
-    """
-    parsed_lines = []
-    with open(path_to_program, "r") as f:
-        lines = f.readlines()
-    for line_number, line in enumerate([line for line in lines if line.strip() != ""]):
-        parsed_lines.append(Line(line, line_number))
-    return parsed_lines
-
-
-if __name__ == "__main__":
-    from pathlib import Path
-
-    ROOT = Path(__file__).parent.parent.parent
-    program_path = ROOT / "code_examples" / "code_example4.txt"
-    assert program_path.exists()
-
-    lines = parse_lines(program_path)
-
-    pprint(lines)
+class ProgramParser:
+    def __init__(self, source_code: str):
+        lines = parse_lines(source_code)
+        self.program = ProgramBlock(lines)
+        self.graph = Graph()
+        self.node_content = {}
+        
+    def print(self) -> None:
+        self.program.print()
+        
+    def populate_graph(self) -> None:
+        self._populate_graph(self.program)
+        self.replace_nodes()
+    
+    @classmethod
+    def from_file(cls, path_to_program: str) -> "ProgramParser":
+        with open(path_to_program, "r") as f:
+            source_code = f.read()
+        return cls(source_code)
+    
+    def _populate_graph(self, block: ProgramBlock) -> None:
+        """Recursively populates the graph attribute of the ProgramParser object."""
+        
+        if block.is_empty():
+            return
+        
+        if block.type == BlockType.WHILE_BLOCK:
+            blocks = subdivide_while(block)
+            head, body, tail = blocks["head"], blocks["body"], blocks["tail"]
+            
+            self.graph.add_node(head.id)
+            self.graph.add_node(body.id)
+            self.graph.add_node(tail.id)
+            
+            self.graph.add_edge(head.id, body.id)
+            self.graph.add_edge(body.id, head.id)
+            self.graph.add_edge(body.id, tail.id)
+            
+            self.node_content[head.id] = head
+            self.node_content[body.id] = body
+            self.node_content[tail.id] = tail
+            
+            self._populate_graph(body)
+            self._populate_graph(tail)
+            
+        elif block.type == BlockType.IF_BLOCK:
+            blocks = subdivide_if(block)
+            head, if_body, else_body, tail = (
+                blocks["head"],
+                blocks["if_body"],
+                blocks["else_body"],
+                blocks["tail"],
+            )
+            
+            self.graph.add_node(head.id)
+            self.graph.add_node(if_body.id)
+            self.graph.add_node(else_body.id)
+            self.graph.add_node(tail.id)
+            
+            self.graph.add_edge(head.id, if_body.id)
+            self.graph.add_edge(head.id, else_body.id)
+            self.graph.add_edge(if_body.id, tail.id)
+            self.graph.add_edge(else_body.id, tail.id)
+            
+            self.node_content[head.id] = head
+            self.node_content[if_body.id] = if_body
+            self.node_content[else_body.id] = else_body
+            self.node_content[tail.id] = tail
+            
+            self._populate_graph(if_body)
+            self._populate_graph(else_body)
+            self._populate_graph(tail)
+            
+        elif block.type == BlockType.SIMPLE:
+            self.graph.add_node(block.id)
+            self.node_content[block.id] = block
+        else:
+            raise ValueError(f"Invalid block type: {block.type}")
+        
+    def replace_nodes(self) -> None:
+        """Replaces the nodes of the graph by their content."""
+        for i in range(self.graph.num_nodes):
+            node = self.graph.nodes[i]
+            self.graph.nodes[i] = self.node_content[node]
+        for i in range(self.graph.num_edges):
+            source, target = self.graph.edges[i]
+            self.graph.edges[i] = (self.node_content[source], self.node_content[target])
+        if not self.graph.validate():
+            raise ValueError("Invalid graph")
+        

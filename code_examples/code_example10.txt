@@ -1,0 +1,11 @@
+x = 0
+while x > 5:
+    y = 3
+    if y < 10:
+        y = y + 1
+
+if z == 5:
+    print("z is 5")
+else:
+    while z < 10:
+        print("z is less than 10")

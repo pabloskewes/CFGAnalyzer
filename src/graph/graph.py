@@ -1,4 +1,5 @@
 from typing import Any, List, Dict, Tuple
+from dataclasses import dataclass
 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -10,6 +11,14 @@ class GraphError(Exception):
     pass
 
 
+@dataclass
+class GraphSettings:
+    """Settings for the graph."""
+
+    allow_adding_existing_nodes: bool = False
+    allow_adding_edges_to_non_existing_nodes: bool = False
+
+
 class Graph:
     """A graph data structure. Can be initialized from nodes and edges, an adjacency list, or an adjacency matrix."""
 
@@ -18,20 +27,43 @@ class Graph:
         self.edges: List[Tuple[Any, Any]] = []
         self._adjacency_list: Dict[Any, List[Any]] = {}
         self._adjacency_matrix: List[List[int]] = []
+        self.settings = GraphSettings()
 
     def add_node(self, node: Any):
         """Add a node to the graph."""
         if node in self.nodes:
-            raise GraphError(f"Node {node} already exists in the graph.")
+            if not self.settings.allow_adding_existing_nodes:
+                raise GraphError(f"Node {node} already exists in the graph.")
+            return
         self.nodes.append(node)
+        self._reset()
 
     def add_edge(self, source: Any, target: Any):
         """Add an edge to the graph."""
-        if source not in self.nodes:
+        if (
+            source not in self.nodes
+            and not self.settings.allow_adding_edges_to_non_existing_nodes
+        ):
             raise GraphError(f"Node {source} does not exist in the graph.")
-        if target not in self.nodes:
+        if (
+            target not in self.nodes
+            and not self.settings.allow_adding_edges_to_non_existing_nodes
+        ):
             raise GraphError(f"Node {target} does not exist in the graph.")
         self.edges.append((source, target))
+        self._reset()
+
+    def _reset(self):
+        """Reset the adjacency list and adjacency matrix."""
+        self._adjacency_list = {}
+        self._adjacency_matrix = []
+        
+    def validate(self) -> bool:
+        """Validate the graph."""
+        for source, target in self.edges:
+            if source not in self.nodes or target not in self.nodes:
+                return False
+        return True
 
     @property
     def num_nodes(self) -> int:

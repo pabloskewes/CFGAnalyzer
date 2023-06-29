@@ -1,84 +1,125 @@
 import unittest
+
 from pathlib import Path
-
-from src.parser.program_parser import (
-    clean_string,
-    get_line_type,
-    parse_lines,
-    LineType,
-    InvalidLineError,
+from src.parser.block_parser import (
+    ProgramBlock,
+    BlockType,
+    subdivide_if,
+    subdivide_while,
 )
+from src.parser.line_parser import LineType, parse_lines
 
 
-class TestLineParser(unittest.TestCase):
-    def test_clean_string(self):
-        self.assertEqual(clean_string("    "), "\t")
-        self.assertEqual(clean_string("    if "), "\tif ")
-        self.assertEqual(clean_string("’"), "'")
-        self.assertFalse(clean_string("    ") == "    ")
+EXAMPLES_PATH = Path(__file__).parent.parent / "code_examples"
 
-    def test_get_line_type(self):
-        self.assertEqual(get_line_type("a = 1"), LineType.ASSING)
-        self.assertEqual(get_line_type("if a == 1:"), LineType.IF)
-        self.assertEqual(get_line_type("else:"), LineType.ELSE)
-        self.assertEqual(get_line_type("while a == 1:"), LineType.WHILE)
-        self.assertEqual(get_line_type("print(a)"), LineType.FUNCTION)
 
-        with self.assertRaises(InvalidLineError):
-            get_line_type("a = 1 +")
-        with self.assertRaises(InvalidLineError):
-            get_line_type("if a == 1")
-        with self.assertRaises(InvalidLineError):
-            get_line_type("else")
-        with self.assertRaises(InvalidLineError):
-            get_line_type("while a == 1")
-        with self.assertRaises(InvalidLineError):
-            get_line_type("print(a")
-
-    def test_parse_lines(self):
+class ProgramBlockTest(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
         """
         Tests the following program:
         x = 0
         while x < 10:
             if x > 5:
                 print(x)
-            else :
-                print( ’x es menor que 6’)
-
+            else:
+                print('x es menor que 6')
             x = x + 1
         """
-        ROOT = Path(__file__).parent.parent
-        program_path = ROOT / "code_examples" / "code_example4.txt"
-        self.assertTrue(program_path.exists())
+        super(ProgramBlockTest, self).__init__(*args, **kwargs)
+        program_path = EXAMPLES_PATH / "code_example5.txt"
+        self.lines = parse_lines(program_path.read_text())
 
-        lines = parse_lines(program_path)
+    def test_is_empty(self):
+        block = ProgramBlock()
+        self.assertTrue(block.is_empty())
+        block = ProgramBlock(self.lines)
+        self.assertFalse(block.is_empty())
 
-        self.assertEqual(len(lines), 7)
-        self.assertEqual(lines[0].content, "x = 0")
-        self.assertEqual(lines[0].line_number, 0)
-        self.assertEqual(lines[0].tabs, 0)
-        self.assertEqual(lines[0].type, LineType.ASSING)
-        self.assertEqual(lines[1].content, "while x < 10:")
-        self.assertEqual(lines[1].line_number, 1)
-        self.assertEqual(lines[1].tabs, 0)
-        self.assertEqual(lines[1].type, LineType.WHILE)
-        self.assertEqual(lines[2].content, "if x > 5:")
-        self.assertEqual(lines[2].line_number, 2)
-        self.assertEqual(lines[2].tabs, 1)
-        self.assertEqual(lines[2].type, LineType.IF)
-        self.assertEqual(lines[3].content, "print(x)")
-        self.assertEqual(lines[3].line_number, 3)
-        self.assertEqual(lines[3].tabs, 2)
-        self.assertEqual(lines[3].type, LineType.FUNCTION)
-        self.assertEqual(lines[4].content, "else :")
-        self.assertEqual(lines[4].line_number, 4)
-        self.assertEqual(lines[4].tabs, 1)
-        self.assertEqual(lines[4].type, LineType.ELSE)
-        self.assertEqual(lines[5].content, "print( 'x es menor que 6')")
-        self.assertEqual(lines[5].line_number, 5)
-        self.assertEqual(lines[5].tabs, 2)
-        self.assertEqual(lines[5].type, LineType.FUNCTION)
-        self.assertEqual(lines[6].content, "x = x + 1")
-        self.assertEqual(lines[6].line_number, 6)
-        self.assertEqual(lines[6].tabs, 1)
-        self.assertEqual(lines[6].type, LineType.ASSING)
+    def test_has_same_ident(self):
+        block = ProgramBlock(self.lines)
+        self.assertFalse(block.has_same_ident())
+        block = ProgramBlock(self.lines[:2])
+        self.assertTrue(block.has_same_ident())
+
+    def test_has_control_flow(self):
+        block = ProgramBlock(self.lines)
+        self.assertTrue(block.has_control_flow())
+        block = ProgramBlock(self.lines[0:1])
+        self.assertFalse(block.has_control_flow())
+
+    def test_is_simple(self):
+        block = ProgramBlock(self.lines)
+        self.assertFalse(block.is_simple())
+        block = ProgramBlock(self.lines[0:1])
+        self.assertTrue(block.is_simple())
+
+    def test_determine_block_type(self):
+        block = ProgramBlock(self.lines)
+        self.assertEqual(block.type, BlockType.WHILE_BLOCK)
+        block = ProgramBlock(self.lines[2:6])
+        self.assertEqual(block.type, BlockType.IF_BLOCK)
+
+
+class ProgramBlockDivisionTest(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        """
+        Tests the following program:
+        x = 0
+        while x > 5:
+            y = 3
+            if y < 10:
+                y = y + 1
+
+        if z == 5:
+            print("z is 5")
+        else:
+            while z < 10:
+                print("z is less than 10")
+        """
+        super(ProgramBlockDivisionTest, self).__init__(*args, **kwargs)
+        program_path = EXAMPLES_PATH / "code_example10.txt"
+        self.lines = parse_lines(program_path.read_text())
+
+    def test_divide(self):
+        block = ProgramBlock(self.lines)
+        sub_blocks = subdivide_while(block)
+        head, body, tail = (
+            sub_blocks["head"],
+            sub_blocks["while_body"],
+            sub_blocks["tail"],
+        )
+
+        self.assertEqual(head.type, BlockType.WHILE_BLOCK)
+        self.assertTrue(head.has_control_flow())
+        self.assertTrue(head.has_same_ident())
+        self.assertEqual(head.lines[-1].type, LineType.WHILE)
+        self.assertEqual(head.lines[-1].content, "while x > 5:")
+
+        self.assertEqual(body.lines, self.lines[2:5])
+        self.assertEqual(tail.type, BlockType.IF_BLOCK)
+
+        sub_blocks = subdivide_if(body)
+        sub_head, sub_if_body, sub_else_body, sub_tail = (
+            sub_blocks["head"],
+            sub_blocks["if_body"],
+            sub_blocks["else_body"],
+            sub_blocks["tail"],
+        )
+
+        self.assertEqual(sub_head.lines, self.lines[2:4])
+        self.assertEqual(sub_if_body.lines, self.lines[4:5])
+        self.assertEqual(sub_else_body.lines, [])
+        self.assertEqual(sub_tail.lines, [])
+
+        sub_blocks = subdivide_if(tail)
+        sub_head, sub_if_body, sub_else_body, sub_tail = (
+            sub_blocks["head"],
+            sub_blocks["if_body"],
+            sub_blocks["else_body"],
+            sub_blocks["tail"],
+        )
+
+        self.assertEqual(sub_head.lines, self.lines[5:6])
+        self.assertEqual(sub_if_body.lines, self.lines[6:7])
+        self.assertEqual(sub_else_body.lines, self.lines[8:10])
+        self.assertEqual(sub_tail.lines, [])

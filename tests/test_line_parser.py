@@ -1,77 +1,77 @@
 import unittest
+from pathlib import Path
+
 from src.parser.line_parser import (
-    is_var,
-    is_constant,
-    is_string,
-    is_function_call,
-    is_condition,
-    is_expression,
-    is_assignment,
+    get_line_type,
+    parse_lines,
+    LineType,
+    InvalidLineError,
 )
 
 
-class LineParserTestCase(unittest.TestCase):
-    def test_is_var(self):
-        self.assertTrue(is_var("a"))
-        self.assertTrue(is_var("b"))
-        self.assertFalse(is_var("A"))
-        self.assertFalse(is_var("1"))
-        self.assertFalse(is_var("ab"))
-        self.assertFalse(is_var("a1"))
+class TestLineParser(unittest.TestCase):
+    def test_get_line_type(self):
+        self.assertEqual(get_line_type("a = 1"), LineType.ASSING)
+        self.assertEqual(get_line_type("if a == 1:"), LineType.IF)
+        self.assertEqual(get_line_type("else:"), LineType.ELSE)
+        self.assertEqual(get_line_type("while a == 1:"), LineType.WHILE)
+        self.assertEqual(get_line_type("print(a)"), LineType.FUNCTION)
 
-    def test_is_constant(self):
-        self.assertTrue(is_constant("1"))
-        self.assertTrue(is_constant("2"))
-        self.assertTrue(is_constant("100"))
-        self.assertFalse(is_constant("a"))
-        self.assertFalse(is_constant("A"))
-        self.assertFalse(is_constant("1a"))
+        with self.assertRaises(InvalidLineError):
+            get_line_type("a = 1 +")
+        with self.assertRaises(InvalidLineError):
+            get_line_type("if a == 1")
+        with self.assertRaises(InvalidLineError):
+            get_line_type("else")
+        with self.assertRaises(InvalidLineError):
+            get_line_type("while a == 1")
+        with self.assertRaises(InvalidLineError):
+            get_line_type("print(a")
 
-    def test_is_string(self):
-        self.assertTrue(is_string('"a"'))
-        self.assertTrue(is_string("'a'"))
-        self.assertTrue(is_string('"This is a string"'))
-        self.assertTrue(is_string("'This is a string (2+2+2)'"))
-        self.assertFalse(is_string("a"))
-        self.assertFalse(is_string("1"))
+    def test_parse_lines(self):
+        """
+        Tests the following program:
+        x = 0
+        while x < 10:
+            if x > 5:
+                print(x)
+            else :
+                print( ’x es menor que 6’)
 
-    def test_is_function_call(self):
-        self.assertTrue(is_function_call("f()"))
-        self.assertTrue(is_function_call("f(a)"))
-        self.assertTrue(is_function_call("f(a, b)"))
-        self.assertTrue(is_function_call("f(a, b + 3)"))
-        self.assertTrue(is_function_call('print("hello")'))
-        self.assertTrue(is_function_call('print(2 + 3, a*2, "hello")'))
-        self.assertFalse(is_function_call("f"))
-        self.assertFalse(is_function_call("f(a"))
-        self.assertFalse(is_function_call("f(a, b"))
+            x = x + 1
+        """
+        ROOT = Path(__file__).parent.parent
+        program_path = ROOT / "code_examples" / "code_example9.txt"
+        self.assertTrue(program_path.exists())
 
-    def test_is_expression(self):
-        self.assertTrue(is_expression("a"))
-        self.assertTrue(is_expression("a + b"))
-        self.assertTrue(is_expression("a + b + c"))
-        self.assertTrue(is_expression("f(x, y, z)"))
-        self.assertTrue(is_expression("f(a, b) + c"))
-        self.assertTrue(is_expression("a + f(a, b)"))
-        self.assertTrue(is_expression("22 % 2 + x"))
-        self.assertTrue(is_expression("ff(ff(ff(x)))"))
-        self.assertTrue(is_expression("ff(ff(ff(x**2)))"))
+        lines = parse_lines(program_path.read_text())
 
-    def test_is_condition(self):
-        self.assertTrue(is_condition("a == b"))
-        self.assertTrue(is_condition("a != b"))
-        self.assertTrue(is_condition("a**2 < b"))
-        self.assertTrue(is_condition("f(x, y) + 4 > b + 2"))
-        self.assertTrue(is_condition("a <= f(a, b)"))
-        self.assertTrue(is_condition("a >= f(f(x, y), f(x, y))"))
-        self.assertFalse(is_condition("a"))
-
-    def test_is_assignment(self):
-        self.assertTrue(is_assignment("a = 2"))
-        self.assertTrue(is_assignment("a = b"))
-        self.assertTrue(is_assignment("a = f(a, b)"))
-        self.assertTrue(is_assignment("a = f(a, b) + 2"))
-        self.assertTrue(is_assignment("a = f(a, b) + f(a, b)"))
-        self.assertFalse(is_assignment("a"))
-        self.assertFalse(is_assignment("a + 2"))
-        self.assertFalse(is_assignment("a + 2 = b"))
+        self.assertEqual(len(lines), 7)
+        self.assertEqual(lines[0].content, "x = 0")
+        self.assertEqual(lines[0].line_number, 0)
+        self.assertEqual(lines[0].tabs, 0)
+        self.assertEqual(lines[0].type, LineType.ASSING)
+        self.assertEqual(lines[1].content, "while x < 10:")
+        self.assertEqual(lines[1].line_number, 1)
+        self.assertEqual(lines[1].tabs, 0)
+        self.assertEqual(lines[1].type, LineType.WHILE)
+        self.assertEqual(lines[2].content, "if x > 5:")
+        self.assertEqual(lines[2].line_number, 2)
+        self.assertEqual(lines[2].tabs, 1)
+        self.assertEqual(lines[2].type, LineType.IF)
+        self.assertEqual(lines[3].content, "print(x)")
+        self.assertEqual(lines[3].line_number, 3)
+        self.assertEqual(lines[3].tabs, 2)
+        self.assertEqual(lines[3].type, LineType.FUNCTION)
+        self.assertEqual(lines[4].content, "else :")
+        self.assertEqual(lines[4].line_number, 4)
+        self.assertEqual(lines[4].tabs, 1)
+        self.assertEqual(lines[4].type, LineType.ELSE)
+        self.assertEqual(lines[5].content, "print( 'x es menor que 6')")
+        self.assertEqual(lines[5].line_number, 5)
+        self.assertEqual(lines[5].tabs, 2)
+        self.assertEqual(lines[5].type, LineType.FUNCTION)
+        self.assertEqual(lines[6].content, "x = x + 1")
+        self.assertEqual(lines[6].line_number, 6)
+        self.assertEqual(lines[6].tabs, 1)
+        self.assertEqual(lines[6].type, LineType.ASSING)
