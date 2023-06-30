@@ -1,8 +1,9 @@
 from typing import Any, List, Dict, Tuple
 from dataclasses import dataclass
 
-import networkx as nx
-import matplotlib.pyplot as plt
+import graphviz
+from IPython.display import Image
+
 
 
 class GraphError(Exception):
@@ -162,30 +163,60 @@ class Graph:
                         graph.add_node(neighbor)
                     graph.add_edge(node, neighbor)
         return graph
-
+    
     def plot(self):
-        """Plot the graph using networkx and matplotlib."""
-        nx_graph = nx.DiGraph()
-        nx_graph.add_nodes_from(self.nodes)
-        nx_graph.add_edges_from(self.edges)
+        """Plot the graph using Graphviz."""
+        dot = graphviz.Digraph()
 
-        pos = nx.spring_layout(nx_graph)
+        # Add nodes
+        for node in self.nodes:
+            dot.node(str(node))
 
-        node_size = 2000
-        node_color = "lightblue"
+        # Add edges
+        for edge in self.edges:
+            dot.edge(str(edge[0]), str(edge[1]))
 
-        nx.draw_networkx_nodes(
-            nx_graph, pos, node_size=node_size, node_color=node_color, node_shape="s"
-        )
-        nx.draw_networkx_labels(nx_graph, pos, font_size=10, verticalalignment="center")
+        # Set the node at the top of the figure
+        dot.graph_attr['rankdir'] = 'TB'
 
-        nx.draw_networkx_edges(nx_graph, pos)
+        src = graphviz.Source(dot.source)
+        src.format = 'png'  # Output format (change it if needed)
+        src.render('graph')  # Output file name (change it if needed)
+        display(Image(filename='graph.png'))
+        # src.view()  # Display the graph directly in Jupyter Notebook
 
-        plt.xlim(-1.1, 1.1)
-        plt.ylim(-1.1, 1.1)
-        plt.axis("off")
+    # def plot(self, top_node: Any = None):
+    #     """Plot the graph using networkx and matplotlib."""
+    #     nx_graph = nx.DiGraph(directed=True)
+    #     nx_graph.add_nodes_from(self.nodes)
+    #     nx_graph.add_edges_from(self.edges)
 
-        plt.show()
+    #     pos = nx.spring_layout(nx_graph)
+        
+    #     pos[top_node] = (pos[top_node][0], 1.0)
+
+    #     node_size = 2000
+    #     node_color = "lightblue"
+
+    #     nx.draw_networkx_nodes(
+    #         nx_graph, pos, node_size=node_size, node_color=node_color, node_shape="s"
+    #     )
+    #     nx.draw_networkx_labels(nx_graph, pos, font_size=10, verticalalignment="center")
+
+    #     nx.draw_networkx_edges(
+    #         nx_graph,
+    #         pos,
+    #         arrows=True,
+    #         arrowstyle="->",
+    #         arrowsize=20,
+    #         edge_color="black",
+    #     )
+
+    #     plt.xlim(-1.1, 1.1)
+    #     plt.ylim(-1.1, 1.1)
+    #     plt.axis("off")
+
+    #     plt.show()
 
 
 def ciclomatic_complexity(graph: Graph) -> int:

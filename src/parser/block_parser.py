@@ -13,6 +13,7 @@ def is_control_flow(line: Line) -> bool:
 
 
 class BlockType(Enum):
+    EMPTY = "EMPTY"
     SIMPLE = "SIMPLE"
     IF_BLOCK = "IF_BLOCK"
     WHILE_BLOCK = "WHILE_BLOCK"
@@ -25,9 +26,12 @@ class ProgramBlock:
         id: id of the block
         lines: list of lines of the block
     """
+    BLOCK_COUNTER = 1
 
     def __init__(self, lines: List[Line] = []):
         self.lines = deepcopy(lines)
+        self._id = ProgramBlock.BLOCK_COUNTER
+        ProgramBlock.BLOCK_COUNTER += 1
 
     @property
     def type(self) -> BlockType:
@@ -36,16 +40,21 @@ class ProgramBlock:
     @property
     def id(self):
         if self.is_empty():
-            return -1
+            return self._id * -1
         return self.lines[0].line_number
+    
+    def __str__(self) -> str:
+        if self.is_empty():
+            return f"EMPTY {self._id}"
+        return "\n".join(line.content for line in self.lines)
 
     def __repr__(self):
         return f"ProgramBlock({self.lines=})"
     
     def __eq__(self, other):
         return self.lines == other.lines
-
-    def print(self) -> None:
+    
+    def print(self) -> str:
         code = ""
         for line in self.lines:
             code += "\t" * line.tabs + line.content + "\n"
