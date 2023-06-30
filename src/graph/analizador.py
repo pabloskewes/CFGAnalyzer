@@ -59,7 +59,7 @@ def analizador(file):
     print('Arcos: '+str(graph.num_edges))
     print('Componentes conexos: 1\n')
     print('Variables indefinidas')
-    undef_var, undef_paths = analize_graph(graph, file)
+    undef_var, undef_paths = analize_graph(graph)
     for i in range(len(undef_var)):
         print('Variable: '+undef_var[i])
         camino = ''
