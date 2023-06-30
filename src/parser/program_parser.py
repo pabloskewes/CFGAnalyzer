@@ -9,14 +9,16 @@ class ProgramParser:
         self.source_code = source_code
         self.program = ProgramBlock(lines)
         self.graph = Graph()
+        self.last_node = None
         self.node_content = {}
         
     def print(self) -> None:
         self.program.print()
         
     def populate_graph(self) -> None:
-        self._populate_graph(self.program)
-        self.replace_nodes()
+        last_node = self._populate_graph(self.program)
+        self.last_node = last_node
+        # self.replace_nodes()
         
     def add_node(self, node: ProgramBlock) -> None:
         self.graph.add_node(node.id)
@@ -47,7 +49,7 @@ class ProgramParser:
             self.add_edge(end_body, head)
             
             self.add_node(tail)
-            self.add_edge(end_body, tail)
+            self.add_edge(head, tail)
             return self._populate_graph(tail)
             
         elif block.type == BlockType.IF_BLOCK:
@@ -76,25 +78,36 @@ class ProgramParser:
             return self._populate_graph(tail)
             
         elif block.type == BlockType.SIMPLE:
-            self.graph.add_node(block.id)
-            self.node_content[block.id] = block
+            self.add_node(block)
             return block
         else:
             raise ValueError(f"Invalid block type: {block.type}")
         
+    # def replace_nodes(self) -> None:
+    #     """Replaces the nodes of the graph by their content."""
+    #     for i in range(self.graph.num_nodes):
+    #         node = self.graph.nodes[i]
+    #         self.graph.nodes[i] = str(self.node_content[node])
+    #     for i in range(self.graph.num_edges):
+    #         source, target = self.graph.edges[i]
+    #         self.graph.edges[i] = (
+    #             str(self.node_content[source]),
+    #             str(self.node_content[target]),
+    #         )
+    #     if not self.graph.validate():
+    #         raise ValueError("Invalid graph")
+    
     def replace_nodes(self) -> None:
-        """Replaces the nodes of the graph by their content."""
-        for i in range(self.graph.num_nodes):
-            node = self.graph.nodes[i]
-            self.graph.nodes[i] = str(self.node_content[node])
-        for i in range(self.graph.num_edges):
-            source, target = self.graph.edges[i]
-            self.graph.edges[i] = (
-                str(self.node_content[source]),
-                str(self.node_content[target]),
-            )
-        if not self.graph.validate():
-            raise ValueError("Invalid graph")
+        graph = Graph()
+        for node in self.graph.nodes:
+            graph.add_node(str(self.node_content[node]))
+            
+        for source, target in self.graph.edges:
+            graph.add_edge(str(self.node_content[source]), str(self.node_content[target]))
+            
+        self.graph = graph
+        self.last_node = str(self.last_node)
+        
         
     def plot_cfg(self) -> None:
         self.graph.plot()

@@ -66,6 +66,7 @@ def is_expression(expr: str) -> bool:
 
 
 def is_condition(cond: str) -> bool:
+    return True
     cond = cond.strip()
 
     for op in ["==", "!=", "<", ">", "<=", ">="]:

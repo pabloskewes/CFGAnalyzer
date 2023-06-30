@@ -1,5 +1,5 @@
 x = 0
-if es_especial(x)
+if es_especial(x):
     x = 5
 else:
     y = 5

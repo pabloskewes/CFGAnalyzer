@@ -54,6 +54,12 @@ class ProgramBlock:
     def __eq__(self, other):
         return self.lines == other.lines
     
+    def str_block(self) -> str:
+        code = ""
+        for line in self.lines:
+            code += "\t" * line.tabs + line.content + "\n"
+        return code
+    
     def print(self) -> str:
         code = ""
         for line in self.lines:
